@@ -51,10 +51,65 @@ library(ggplot2)
 ### Some Scripting
 
 ```{r}
-
-Quiz_1 <- 88
+# This is a comment
+Quiz_1 <- 88.  # This is how you assign a value to a nmae
 Quiz_2 <- 94
 Quiz_3 <- 79
+
+
+Quiz_1
+
+
+# averaging
+
+(Quiz_1 + Quiz_2 + Quiz_3) / 3
+
+# mean function 
+
+mean(Quiz_1 + Quiz_2 + Quiz_3) # Not correct, just adds everything up 
+mean(Quiz_1, Quiz_2, Quiz_3) # Not correct, it just takes the mean of the first value 
+mean(c(Quiz_1, Quiz_2, Quiz_3)) # Correct!
+
+# List 
+
+list <- c(Quiz_1, Quiz_2, Quiz_3)
+
+mean(list)
+
+average <- mean(list)
+
+# Assigning New value
+Quiz_3 <- 99
+Quiz_3
+
+average
+
+list <- c(Quiz_1, Quiz_2, Quiz_3)
+average <- mean(list)
+average
+
+# Round a number 
+round(average, 2)
+```
+
+### More Scores
+
+```{r}
+scores <- c(88,94,79,91,85)
+scores
+
+mean(scores)
+min(scores)
+max(scores)
+length(scores)
+
+summary(scores)
+
+students <- c("a", "b", "c", "d", "e")
+students
+
+#barplot
+barplot(scores, name.arg = students)
 
 ```
 
