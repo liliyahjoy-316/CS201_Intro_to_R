@@ -40,8 +40,21 @@ I don't recommend rearranging your pane layout at this time.
 
 Try running some code
 
+### Load Library
+
+```{r}
+library(ggplot2)
+
+
+```
+
+### Some Scripting
+
 ```{r}
 
+Quiz_1 <- 88
+Quiz_2 <- 94
+Quiz_3 <- 79
 
 ```
 
