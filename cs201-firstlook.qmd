@@ -109,8 +109,9 @@ students <- c("a", "b", "c", "d", "e")
 students
 
 #barplot
-barplot(scores, name.arg = students)
+barplot(scores, names.arg = students)
 
+barplot(scores, names.arg = students, ylim = c(0, 100),, main = "Student Scores", xlab = "Students", y = "Score")
 ```
 
 ## Introducing `ggplot2`
