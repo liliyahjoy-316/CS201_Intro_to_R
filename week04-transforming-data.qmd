@@ -123,12 +123,12 @@ MF_plot <- ggplot(data = MF_only, aes(x = flipper_length_mm, y = body_mass_g, co
 
 ggplotly(MF_plot)
 
-Mf_plot2 <- ggplot(data = MF_only, aes(x = flipper_length_mm, y = body_mass_g, color = species, shape = island)) + 
+MF_plot2 <- ggplot(data = MF_only, aes(x = flipper_length_mm, y = body_mass_g, color = species, shape = island)) + 
   geom_point() + 
   theme(legend.position = "none") + 
   facet_grid(island~sex)
 
-ggplotly(Mf_plot2)
+ggplotly(MF_plot2)
 ```
 
 Bonus: Instead of `facet_wrap()`, try using `facet_grid(island ~ sex)`. Now you have a grid layout with `island` on one axis and `sex` on the other.
