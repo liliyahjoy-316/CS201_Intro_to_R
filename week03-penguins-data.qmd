@@ -304,7 +304,11 @@ ggplotly(plotname)
 ggplot(data = penguins_data, aes(, x = culmen_depth_mm, y = body_mass_g, color = species, shape = island)) + 
   geom_point()  + 
   scale_color_viridis_d(option = "mako") + 
-  scale_shape_manual(values = c(15,16,17))
+  scale_shape_manual(values = c(15,16,17)) +
+  labs(title = "Palmer Penguins' Culmen Depth", 
+     subtitle = "Three species observed on three islands in the Palmer Archipelago", 
+     x = "Culmen Depth (mm)", 
+     y = "Number of Penguins")
 
 
 ```
@@ -323,9 +327,26 @@ ggplot(data = penguins_data, aes(, x = culmen_depth_mm, y = body_mass_g, color =
 culmen <- ggplot(data = penguins_data, aes(, x = culmen_depth_mm, y = body_mass_g, color = species, shape = island)) + 
   geom_point()  + 
   scale_color_viridis_d(option = "mako") + 
-  scale_shape_manual(values = c(15,16,17))
+  scale_shape_manual(values = c(15,16,17)) + 
+  labs(title = "Palmer Penguins' Culmen Depth", 
+       subtitle = "Three species observed on three islands in the Palmer Archipelago", 
+       x = "Culmen Depth (mm)", 
+       y = "Number of Penguins")
 
 ggplotly(culmen)
+```
+
+```{r}
+ culmen_length <- ggplot(data = penguins_data, aes(, x = culmen_length_mm, y = body_mass_g, color = species, shape = island)) + 
+  geom_point()  + 
+  scale_color_viridis_d(option = "magma") + 
+  scale_shape_manual(values = c(15,16,17)) + 
+  labs(title = "Palmer Penguins' Culmen Length", 
+      subtitle = "Three species observed on three islands in the Palmer Archipelago", 
+      x = "Culmen Length (mm)", 
+      y = "Number of Penguins")
+
+ggplotly(culmen_length)
 ```
 
 ## Push to GitHub!
