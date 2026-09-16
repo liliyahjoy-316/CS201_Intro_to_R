@@ -214,6 +214,12 @@ Create a new object called `final_boss` that satisfies all of the following:
 
 ```{r, message=FALSE, warning=FALSE}
 
+final_boss <- penguins |> 
+  filter(sex == 'FEMALE', !is.na(flipper_length_mm), island %in% c('Dream', 'Biscoe')) |> 
+  select(species, island, flipper_length_mm, body_mass_g) |> 
+  mutate(flipper_rank = case_when(flipper_length_mm < 190 ~ "short", flipper_length_mm >= 190 & flipper_length_mm <= 210  ~ "medium", flipper_length_mm > 210 ~ "long")) |> 
+  group_by(species, island, flipper_rank) |> 
+  summarize(body_mass_g= round(mean(body_mass_g, na.rm = TRUE)))
 
 ```
 
