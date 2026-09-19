@@ -337,7 +337,7 @@ ggplotly(culmen)
 ```
 
 ```{r}
- culmen_length <- ggplot(data = penguins_data, aes(, x = culmen_length_mm, y = body_mass_g, color = species, shape = island)) + 
+ culmen_length <- ggplot(data = penguins_data, aes( x = culmen_length_mm, y = body_mass_g, color = species, shape = island)) + 
   geom_point()  + 
   scale_color_viridis_d(option = "magma") + 
   scale_shape_manual(values = c(15,16,17)) + 

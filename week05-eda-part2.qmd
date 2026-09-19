@@ -326,7 +326,7 @@ We can also summarize `price` by `cut` numerically, which makes the puzzle easie
 
 ```{r, message=FALSE}
 #| label: descriptive summary of diamonds data
-
+#USEFUL FOR HW
 diamonds |> 
   group_by(cut) |> 
   summarise(
@@ -342,8 +342,9 @@ Looks like there are other factors that could affect `price` – not just `cut`.
 #| label: scatter plot of carat x price
 
 # try making the points transparent to 0.05
-
-
+ggplot(data=diamonds, aes(x = carat, y=price)) + 
+  geom_point(alpha = 0.05)
+ 
 ```
 
 We can see the general trends, but it's a bit difficult to really see what is going on. Back to boxplots!
@@ -412,7 +413,8 @@ ggplot(data = diamonds, aes(x = clarity, y = price)) +
   geom_boxplot()
 
 # clarity x carat
-
+ggplot(data = diamonds, aes(x = clarity, y = carat)) +
+  geom_boxplot()
 ```
 
 What is the relationship here?
@@ -425,16 +427,20 @@ Let's not forget about `cut`! Is there a relationship between `cut` and `carat`?
 #| label: explore cut
 
 # box plot of cut x price
-
+ggplot(data = diamonds, aes(x = cut, y = price)) +
+  geom_boxplot()
 
 # box plot of cut x carat
-
+ggplot(data = diamonds, aes(x = cut, y = carat)) +
+  geom_boxplot()
 
 # count plot
-
+ggplot(data = diamonds, aes(x = cut, y = carat)) +
+  geom_count()
 
 # violin plot
-
+ggplot(data = diamonds, aes(x = cut, y = carat)) +
+  geom_violin()
 
 ```
 
