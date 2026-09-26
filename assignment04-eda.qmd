@@ -1,0 +1,350 @@
+---
+title: "Assignment 4: Exploratory Data Analysis"
+author: "Liliyah"
+date: "`r Sys.Date()`"
+format: html
+editor: visual
+---
+
+## Overview
+
+Due: **Friday 9/25 11:59pm**
+
+In this assignment, you will practice Exploratory Data Analysis (EDA) by making plots from a **Kaggle dataset of your choice**.
+
+You will submit **at least 4 different plot types**, with short written interpretations for each.
+
+Part 1 is worth a total of 1 point, and Part 2 is worth 4 points (1 point for each plot, question, and interpretation).
+
+## Part 1: Get Your Data
+
+1.  Go to [Kaggle Datasets](https://www.kaggle.com/datasets), create an account, and choose a dataset that interests you. Ensure your data has:
+    1.  At least 4 variables
+    2.  At least one categorical and one continuous variable
+    3.  I recommend data that contains at least 50-100 observations
+    4.  Tip: Open the CSV on Kaggle first and skim the columns to check that it meets these requirements
+2.  Download the dataset as a CSV file.
+3.  Place the CSV in your class R project `data` folder.
+4.  Read it into R with `read_csv()`.
+
+```{r, message=FALSE}
+library(tidyverse)
+library(janitor)
+library(ggplot2)
+library(dplyr)
+library(naniar) 
+library(skimr)
+library(plotly)
+
+shark_attacks <- read_csv("data/attacks_clean.csv") 
+
+```
+
+![]()
+
+### Describe your data
+
+Data author: Toby Jolly
+
+Link: <https://www.kaggle.com/datasets/teajay/global-shark-attacks/data>
+
+Description:
+
+### Preview your data
+
+Use some of the strategies you've learned in this class or picked up elsewhere to summarize and quickly explore your data.
+
+```{r}
+
+skim_data <- skimr::skim(shark_attacks)
+view(skim_data)
+
+```
+
+```{r}
+shark_attacks <- shark_attacks |> 
+  select(-c("case_number", "location", "date", "name", "investigator_or_source", "time", "activity"))
+
+names(shark_attacks)
+```
+
+```{r}
+skim_data <- skimr::skim(shark_attacks)
+view(skim_data)
+```
+
+### Summary stats
+
+Before you make plots, you must also:
+
+- Show basic summaries of your dataset, including:
+
+  - `count()` for categorical variables (to see category frequencies)
+
+  - `mean()`, `median()`, `sd()`, `min()`, `max()` for at least one numeric variable
+
+  - Remember to use `na.rm = TRUE` if you have missing values that affect summaries!
+
+```{r}
+ 
+shark_attacks |>  count(sex)
+
+unique(shark_attacks$activity)
+ #yeah no.... i dislike self entry cause like why
+
+unique(shark_attacks$species)
+# cause like...also why 
+
+unique(shark_attacks$year)
+# i guess das a little better 
+
+unique(shark_attacks$type)
+
+shark_attacks |> count(type)
+```
+
+```{r}
+age_attack <- shark_attacks |>  
+  summarize(mean_attacks = mean(age, na.rm = TRUE))
+
+
+shark_attacks$type <- as.factor(shark_attacks$type)
+
+
+summary(shark_attacks)
+```
+
+```{r}
+shark_attacks |> count(species, sort = TRUE)
+
+#chat im soo cooked, str_detect it is smh 
+
+
+# to save time for me to relabel the findings i did ask to fins all the names that did not have a specfic shark labeleling. Thus making any any nickname and shark measurements NA. to make sure more thing has a better chance at being read i made sure to add the str_to_lower so that everything is made lowercase due to potential irregularity.
+shark_species <- shark_attacks |>
+  mutate(species_lower = str_to_lower(species),
+         shark_type = case_when(
+           str_detect(species_lower, "sandtiger|sand tiger|raggedtooth|grey nurse") ~ "sand tiger",
+           str_detect(species_lower, "tawny nurse|tawney nurse") ~ "tawny nurse",
+           str_detect(species_lower, "nurse")                    ~ "nurse",
+           str_detect(species_lower, "white shark")              ~ "white shark",
+           str_detect(species_lower, "oceanic whitetip")         ~ "oceanic whitetip",
+           str_detect(species_lower, "whitetip reef|white-tipped reef") ~ "whitetip reef",
+           str_detect(species_lower, "tiger shark")              ~ "tiger",
+           str_detect(species_lower, "bull shark|zambesi|zambezi|c. leucas") ~ "bull",
+           str_detect(species_lower, "blacktip reef")            ~ "blacktip reef",
+           str_detect(species_lower, "blacktip|black tip|black-tip|black finned")       ~ "blacktip",
+           str_detect(species_lower, "caribbean reef")           ~ "caribbean reef",
+           str_detect(species_lower, "grey reef|gray reef")      ~ "grey reef",
+           str_detect(species_lower, "bronze whale|copper shark") ~ "bronze whaler",
+           str_detect(species_lower, "whale shark")              ~ "whale",
+           str_detect(species_lower, "mako|bonita")                     ~ "mako",
+           str_detect(species_lower, "lemon")                    ~ "lemon",
+           str_detect(species_lower, "spinner")                  ~ "spinner",
+           str_detect(species_lower, "hammerhead")               ~ "hammerhead",
+           str_detect(species_lower, "wobbegong")                ~ "wobbegong",
+           str_detect(species_lower, "carpet shark")             ~ "carpet",
+           str_detect(species_lower, "blue shark")               ~ "blue shark",
+           str_detect(species_lower, "sevengill|seven-gill|7-gill") ~ "sevengill",
+           str_detect(species_lower, "sixgill")                  ~ "sixgill",
+           str_detect(species_lower, "sandbar|brown shark")      ~ "sandbar",
+           str_detect(species_lower, "sand shark|sandshark")     ~ "sand shark",
+           str_detect(species_lower, "dusky")                    ~ "dusky",
+           str_detect(species_lower, "silky")                    ~ "silky",
+           str_detect(species_lower, "silvertip|albimarginatus") ~ "silvertip",
+           str_detect(species_lower, "blackfin")                 ~ "blackfin",
+           str_detect(species_lower, "galapagos")                ~ "galapagos",
+           str_detect(species_lower, "porbeagle")                ~ "porbeagle",
+           str_detect(species_lower, "thresher")                 ~ "thresher",
+           str_detect(species_lower, "basking")                  ~ "basking",
+           str_detect(species_lower, "goblin")                   ~ "goblin",
+           str_detect(species_lower, "cow shark")                ~ "cow",
+           str_detect(species_lower, "salmon shark")             ~ "salmon shark",
+           str_detect(species_lower, "leopard")                  ~ "leopard",
+           str_detect(species_lower, "soupfin")                  ~ "soupfin",
+           str_detect(species_lower, "port jackson")             ~ "port jackson",
+           str_detect(species_lower, "angel")                    ~ "angel",
+           str_detect(species_lower, "cookiecutter|cookie cutter") ~ "cookiecutter",
+           str_detect(species_lower, "catshark|scyliorhinus")    ~ "catshark",
+           str_detect(species_lower, "dogfish|spurdog|dog shark") ~ "dogfish",
+           str_detect(species_lower, "smooth hound|smoothhound") ~ "smoothhound")) 
+```
+
+```{r}
+shark_species |> count(shark_type, sort = TRUE)
+
+shark_species |> tabyl(fatal)
+```
+
+```{r}
+percent_fatal_by_species <- shark_species |> 
+  group_by(shark_type) |> 
+  summarize(total_attacks = n(), 
+            fatal_attacks = sum(fatal, na.rm = TRUE)) |> 
+  mutate(fatal_percent = (fatal_attacks / total_attacks) * 100) |> 
+  filter(total_attacks >= 10) # Due to the large amount of sharks species, im gonna focus on the ones who has had 10 or more shark attacks 
+  
+
+shark_species <- left_join(shark_species, percent_fatal_by_species, by = "shark_type")
+```
+
+```{r}
+percent_fatal_by_species |> 
+  summarise(mean_fatal = mean(fatal_percent), 
+            median_fatal = median(fatal_percent),
+            sd_fatal = sd(fatal_percent),
+            min_fatal = min(fatal_percent),
+            max_fatal = max(fatal_percent))
+
+
+percent_fatal_by_species |> 
+  filter(fatal_percent > 0) |> # removes the species that never killed anyone this can help us see which sharks are considered more dangerous 
+  summarise(mean_fatal = mean(fatal_percent), 
+            median_fatal = median(fatal_percent),
+            sd_fatal = sd(fatal_percent),
+            min_fatal = min(fatal_percent),
+            max_fatal = max(fatal_percent))
+
+top_danger <- percent_fatal_by_species |> 
+  drop_na(shark_type) |> 
+  arrange(desc(fatal_percent))
+```
+
+```{r}
+percent_fatal_by_species |> 
+  filter(fatal_percent == 0)
+```
+
+\
+Write 2–3 sentences here: What do the category counts tell you? What does the numeric summary show about spread, center, or outliers?
+
+The category counts showed that there are more unprovoked (4,595) recorded in comparison to provoked(574) and that males (5,096) make up most of the victims. There are many missing values throughout the entire data set and many that were considered invalid (in accident types). The fatality summary on species that had 10 or more attacks reveled that there is a skew because in contrary to my initial thoughts, most sharks don cause fatal accidents. High outliers are tiger sharks, great white sharks, bull sharks, and oceanic white tips.
+
+## Part 2: Visualize Your Data
+
+Create **at least 4 plots**, each of a different type. Your plots may share variables, but each one should answer a **different question** about your data. At least one plot must include a variable that isn't in the others.
+
+Each plot should have:
+
+- A title and labeled axes
+
+- A short interpretation (2-3 sentences) underneath
+
+  - Sample interpretation: (boxplot of `price` by `cut` from `diamonds` data): *Ideal diamonds have the lowest median price, which is surprising since Ideal is the best cut. Every cut also has a lot of very expensive outliers. One possible reason for the low Ideal prices is that Ideal diamonds might be smaller on average, which I could check by plotting carat by cut.*
+
+Use the EDA Part 3 notes as your reference. Since this is an EDA assignment, your plots can look plain, but consider adding colors, themes, or interactivity for interpretability and visual appeal if you know how.
+
+### Plot 1
+
+```{r}
+# insert code here
+type_fatal <- shark_attacks |> 
+  group_by(type) |> 
+  drop_na(fatal, type)
+
+
+
+tf<- ggplot(data = type_fatal, aes(x = fatal, fill = type)) + 
+  geom_bar(position = "dodge") + 
+  labs(
+    title    = "Fatality by Type of Accident",
+    x        = "Fatal",
+    y        = "Count",
+    color    = "Type of Accident") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+ggplotly(tf)
+
+
+oppo <- shark_attacks |> 
+  group_by(fatal) |> 
+  drop_na(fatal, type)
+
+
+
+tff<- ggplot(data = oppo, aes(x = type, fill = fatal)) + 
+  geom_bar(position = "dodge") + 
+  labs(
+    title    = "Fatality by Type of Accident",
+    x        = "Type of Accident",
+    y        = "Count",
+    fill    = "Fatal") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+ggplotly(tff)
+```
+
+Question this plot answers: For each type of accident, how many resulted in fatality?
+
+Interpretation: The bar plot shows that accidents did not result in fatalities and most of which we cause by an unprovoked type.
+
+### Plot 2
+
+```{r}
+# insert code here
+Ded <- ggplot(data = top_danger, aes(x = reorder(shark_type, fatal_percent), y = fatal_percent)) +
+  geom_bar(stat = "identity", fill = "darkblue") + 
+  coord_flip() + 
+  labs(title    = "Most Dangerour Sharks ",
+       subtitle = "Sharks are ranked by most fatal in pertanges that is calculaetd by fatal attacks to total attacks",
+         x        = "Shark Types",
+         y        = "Fatality percent") 
+  
+
+ggplotly(Ded)
+```
+
+Question this plot answers: What sharks cause more fatalities?
+
+Interpretation: It seems that tiger sharks, oceanic white tips, great white, and bull sharks are the top four most dangerous sharks when looking at fatality to total attacks. Note that the percentage was taken from total fatal / total attacks, ratios are different with some having more attacks then other with varying amount of fatalities.
+
+### Plot 3
+
+```{r}
+# insert code here
+lg <- shark_attacks |> 
+  filter(year >= 1930) |> 
+  count(year) |> 
+  ggplot(aes(x = year, y = n)) + 
+  geom_line() + 
+  labs(title    = "Shark Attacks Reported by Year",
+       x        = "Year",
+       y        = "Number of Attacks") + 
+  theme_minimal()
+
+
+ggplotly(lg)
+```
+
+Question this plot answers: Is there an increase of shark attacks over the years?
+
+Interpretation: There is a definite increasing of shark attacks over the years but you'll see a spike of accidents around the 1960's and a drop in 2018. This drop might be due to pre-covid where man people stopped going out.
+
+### Plot 4
+
+```{r}
+vp <- shark_attacks |> 
+  drop_na(type, age) |> 
+  filter(type != "Invalid") |> 
+  ggplot(aes(x=type, y=age, fill = type)) + 
+  geom_violin()+ 
+  labs(title    = "Attack Type by Victims age",
+       x        = "Type of attack",
+       y        = "Victim Age") + 
+  theme_minimal()
+
+ggplotly(vp)
+  
+```
+
+Question this plot answers: Do age of the victims differ depending on what type of shark attack happens.
+
+Interpretation: You can see that in unprovoked accidents there are more younger victims with the widest part being at 18 years old. Which can be due to yonger going swimming or surfing.The age range for provoked, sea disaster, and boating accidents is around 29-34. Provoked could point more towards fishing or occupation with sharks which might explain why its sked to more older people.
+
+------------------------------------------------------------------------
+
+# Push to GitHub AND submit link on Canvas!!
+
+Assignment is due Friday 9/25 at 11:59 pm.
