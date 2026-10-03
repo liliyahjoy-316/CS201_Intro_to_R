@@ -1,0 +1,365 @@
+---
+title: "Assignment 5: Substance Use Treatment Mapping"
+subtitle: "STUDENT NAME"
+author: "Amber Camp"
+date: "`r Sys.Date()`"
+format: html
+editor: visual
+toc: true
+---
+
+## Overview
+
+Due: **Friday 10/2, 11:59pm**
+
+In this assignment, you will apply analytic and mapping skills to the 2024 TEDS-D dataset from SAMHSA.
+
+Refer to the following files for reference, though some of what is asked of you here will require logic beyond what we discussed in class:
+
+- week06-treatment-mapping-part1.qmd
+
+- week06-treatment-mapping-part2.qmd
+
+**Before you start:** keep the [codebook](https://www.samhsa.gov/data/system/files/media-puf-file/TEDS-D-2024-DS0001-info-codebook_v1_0.pdf) open in another tab. Every question below depends on knowing what the values in a column actually mean. Don't assume — look it up.
+
+**Time estimate:** about three-four hours total. Question 1 should take you ten minutes. If you are stuck on one thing for more than twenty minutes, ask your classmates or get in touch with me. Being stuck is normal. Staying stuck quietly by yourself is not :)
+
+## Load Packages and Data
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library(janitor)
+library(ggplot2)
+library(sf) # "simple features" for spatial data
+library(urbnmapr) # access to US state/country shapefiles for mapping
+library(ggiraph) # makes ggplot charts interactive
+library(plotly)
+options(scipen = 99) # turns off scientific notation
+
+
+
+```
+
+This is the cleaned dataset you saved at the end of Part 1.
+
+```{r}
+#| label: read-data
+
+teds_d <- readRDS("data/teds_d_clean.rds")
+```
+
+## Question 1: Warm-up
+
+Before mapping anything, get oriented in the data.
+
+a)  Using `tabyl()`, show the breakdown of `reason` (reason for discharge). Which reason is most common, and what percentage of all discharges does it account for?
+
+b)  Make one bar chart showing the number of discharges by `services_d` (type of treatment service). Give it an informative title and axis labels.
+
+c)  In a sentence or two: what does the `reason` value "Transferred to another treatment program or facility" mean for our completion percentages? If a state transfers a lot of patients, would its completion rate look higher or lower than a state that transfers very few?
+
+> **Full credit:** a working `tabyl()`, a readable labeled bar chart, and a sentence or two showing you thought about part (c). There is no trick in this question!
+
+```{r}
+#| label: full
+
+tabyl(teds_d$reason)
+
+
+bc <- ggplot(data = teds_d, aes(x = fct_infreq(services_d), fill = reason)) + 
+  geom_bar() + 
+  coord_flip() + 
+  labs(x = "Service Provided", 
+       title = " Discharge by Service Type")
+  
+
+ggplotly(bc)
+
+
+
+#ggplot(data = teds_d, aes(x = fct_infreq(services_d)))+
+#  geom_bar() + 
+#  scale_x_continuous(labels = scales::label_comma()) + 
+#  labs(title = "Treatemant DIscharge by Type of services, 2024 TEDS_d",
+#       x = "number of discharge",
+#       y = "Type of treatment services") + 
+#  theme_minimal() 
+
+```
+
+**Answer to (a): Treatment completed was the leading reason for discharge It accounts for 47% of all discharge.**
+
+**Answer to (b):** (produce a bar chart in the code chunk above)
+
+**Answer to (c): Reason for transferring to another program or facility shows how many people have been moved from their original program. So a state that has a high transfer rate can be seen having more completion rate in comparison to a state who does not have a high transfer rate. It might show as completed but does not guarantee success.**
+
+## Question 2: Mapping no use at discharge
+
+Make **one [*interactive*]{.underline} map** with `ggiraph` showing, for each state, the percentage of [completed treatment]{.underline} episodes that ended with [no use at discharge]{.underline}.
+
+In other words: among the episodes where `reason` is "Treatment completed," what share had `freq1_d` equal to "no use"?
+
+Work through this in bite-sized steps, like we did in Part 2. You will need to filter, group, summarize, build an index, join, and plot. Write one step at a time and look at the result before moving on.
+
+### The denominator decision
+
+About a third of the `freq1_d` values in this dataset are "unknown." That means you have to decide what your denominator is, and there is more than one defensible answer:
+
+- **All** completed episodes, counting "unknown" in the denominator, or
+
+- Only completed episodes where frequency of use was **actually recorded**.
+
+Pick one. **Below your map, write one sentence saying which denominator you used and why.** Either choice can earn full credit. Missing description earns no points for this portion.
+
+### Your map must:
+
+- be interactive (rendered with `girafe()`)
+
+- show a tooltip with the state name and the percentage, rounded to two decimal places
+
+- have a title and a legend label that say what is being shown
+
+- handle states with no data honestly (remember Friday in class)
+
+> **Full credit:** one interactive map meeting the four requirements above, plus your denominator sentence. It does not have to be beautiful, only correct and readable.\
+
+```{r}
+#| label: creating new column 
+
+# maybe chnae the percentage to best fit the problem now 
+percent_completed_by_state_nouse <- teds_d |>
+  group_by(stfips) |> 
+  summarize(completed_cases = sum(reason == "treatment complete" & freq1_d != "unknown", na.rm = TRUE) ,
+            no_use = sum(reason == "treatment complete" & freq1_d == "no use", na.rm = TRUE)) |> 
+  mutate(percentage_completed = (no_use / completed_cases) * 100)
+```
+
+```{r}
+#| label: state_map
+
+states_map <- get_urbn_map(map = "states", sf = TRUE)
+```
+
+```{r}
+#| label: Removing the leading zeros 
+
+percent_completed_by_state_nouse <- percent_completed_by_state_nouse |>
+  mutate(state_fips = sprintf("%02d", stfips))
+```
+
+```{r}
+#| label: joining 
+
+mapping_data <- full_join(percent_completed_by_state_nouse,
+                          states_map,
+                          by = "state_fips")
+
+head(states_map, 10)
+```
+
+```{r}
+#| label: q2
+
+treatment_completed_by_nouse <- ggplot(mapping_data) + 
+  geom_sf_interactive(mapping = aes(geometry = geometry, fill = percentage_completed,
+                                    tooltip = paste("State:", state_abbv,
+                                                    "<br>State FIPS:", stfips, 
+                                                    "<br>Competed:", round(percentage_completed, 2), "%",
+                                                    "<br>Total Completed:", completed_cases,
+                                                    "<br>No Use:", no_use)),
+                                                       # Tota completed treatment to check 
+                                                        # totla no use cases to check 
+                      color = "#ffffff",
+                      linewidth = 0.25) +
+  labs(fill = "% completed/nouse") +
+  coord_sf(datum = NA) +
+  theme_minimal()
+
+girafe(ggobj = treatment_completed_by_nouse)
+```
+
+```{r}
+#| label: Math Check  
+teds_d |> 
+  summarise(reason = "treatment complete")
+
+tabyl(teds_d$reason, na.rm = TRUE)
+tabyl(teds_d$freq1_d!= "unknown", na.rm = TRUE)
+tabyl(teds_d$freq1_d, na.rm = TRUE)
+
+# Total cases in the state of HAwaii
+sum(teds_d$stfips == 15)
+# 5155 cases
+
+# Cases in Hawaii that have completed treatment and reported no use 
+sum(teds_d$stfips == 15 & teds_d$reason == "treatment complete" & teds_d$freq1_d == "no use", na.rm = TRUE )
+# 662 cases
+
+#Cases in hawaii that reported treatment completed 
+sum(teds_d$stfips == 15 & teds_d$reason == "treatment complete", na.rm = TRUE )
+#1181 cases 
+
+#Cases in hawaii that reported treatment completed not including the unknown 
+sum(teds_d$stfips == 15 & teds_d$reason == "treatment complete" & teds_d$freq1_d!= "unknown", na.rm = TRUE )
+# 1165 cases
+
+
+# trying to see if i should account of total casses 
+```
+
+**Denominator I used, and why: I chose to have my denominator without the unknowns because I want to look confirmed data. When presenting this data I want to insure the stat integrity. The value unknown can account for more or less of the value that I am looking at, which could incorrectly reflect the results.**
+
+## Question 3: Service type and length of stay
+
+Treatment outcomes can vary depending on the type of service a patient receives and how long they stay in treatment.
+
+Investigate how **completion rates** differ across **service type** (`services_d`) and **length of stay** (`los`).
+
+- Create **two** visualizations: at least one focused on service type, and at least one focused on length of stay. These do not need to be maps, and they do not need to be interactive. Pick whatever chart type makes the pattern easiest to see.
+
+- Then write a short summary (3-ish sentences, full grammatical sentences) explaining the main patterns you observe.
+
+**One warning:** look up `los` in the codebook *before* you calculate anything with it. Code that runs without an error can still give you a meaningless answer.
+
+> **Full credit:** two labeled visualizations that actually show the comparison you say they show, plus a summary that describes a real pattern in your own output. You are not graded on finding the "right" pattern. You are graded on whether your summary matches your charts.
+
+```{r}
+#| label: q3
+
+
+tabyl(teds_d$services_d, na.rm = TRUE)
+
+
+
+# SHould I turn this inot a factor and look at counts instead?? relabel 
+tabyl(teds_d$los, na.rm = TRUE)
+# 31: 31 to 45 days -> one month to one and a half months
+# 32: 46 to 60 days -> one and a half months  to two months 
+# 33: 61 to 90 days -> two months to three months 
+# 34: 91 to 120 days -> three months to four months 
+# 35: 121 to 180 days -> four months to six months 
+# 36: 181 to 365 days -> six months to twelve months (one year)
+# 37: greater that a year -> a year plus
+# or 
+# do week 1, week 2, week 3, week 4...
+
+
+los_serv <- ggplot(data = teds_d, aes(x = los, na.rm = TRUE, fill = services_d)) + 
+  geom_bar()
+
+ggplotly(los_serv)
+```
+
+```{r}
+#| label: relabeling los 
+
+teds_d |> 
+  tabyl(los) 
+
+teds_d <- teds_d |> 
+  mutate(los_cnt = as.numeric(as.character(los)), 
+         los = case_when(
+                             los_cnt <= 7 ~ "week 1",
+                             los_cnt <= 14 ~ "week 2",
+                             los_cnt <= 21 ~ "week 3",
+                             los_cnt <= 30 ~ "week 4",
+                             los_cnt <= 31 ~ "1 - 1.5 month",
+                             los_cnt <= 32 ~ "1.5 - 2 month",
+                             los_cnt <= 33 ~ "2 - 3 month",
+                             los_cnt <= 34 ~ "3 - 4 month",
+                             los_cnt <= 35 ~ "4 - 6 month",
+                             los_cnt <= 36 ~ "6 - 12 month",
+                             los_cnt <= 37 ~ "over 1 year",
+                             is.na(los_cnt) ~ "unknown"
+                             ),
+                 los = factor(los, levels = c("week 1", "week 2", "week 3", "week 4", "1 - 1.5 month", "1.5 - 2 month", "2 - 3 month", "3 - 4 month", "4 - 6 month", "6 - 12 month", "over 1 year", "unknown"))) |> 
+    select(-los_cnt )
+
+teds_d |> 
+  tabyl(los) 
+
+
+
+```
+
+```{r}
+
+teds_d <- teds_d |> 
+  mutate(los = as.factor(los))
+
+losss <- ggplot(data = teds_d, aes(x = fct_infreq(services_d), na.rm = TRUE)) + 
+  geom_bar() + 
+  coord_flip() + 
+  facet_wrap(~ los, scales = "free_x") + 
+  labs(title = "Service by length of stay ",
+       x = "Services Provided",
+       y = "Number of Cases")
+
+ggplotly(losss)
+
+# idk why verything keeps squishing T-T
+
+
+los_serv_rea <- teds_d |> 
+  filter(!is.na(los), los != "unknown",!is.na(reason), !is.na(services_d)) |> 
+  ggplot(aes(y = los, fill = reason)) +
+  geom_bar() +
+  #coord_flip() + 
+  scale_x_continuous(labels = scales::comma) + 
+  facet_wrap(~services_d, scales = "free_x") +
+  labs(title = "Length of stay by Service Colored by Reason ",
+       x = "Number of cases",
+       y = "Lenght of Stay",
+       fill = "Reason") +
+  theme(axis.text.x = element_text(size = 8, angle = 90, hjust = 1)) 
+
+ggplotly(los_serv_rea, height = 800)
+```
+
+```{r}
+
+los_sum_ting <- teds_d |> 
+  filter(!is.na(los), los != "unknown", !is.na(services_d)) |>
+  group_by(services_d, los) |> 
+  summarize(total = n(), .groups = "drop") |> 
+  group_by(services_d) |> 
+  mutate(ser_len = total / sum(total) * 100)
+  ggplot(los_sum_ting, aes(x = los, y = services_d, fill = ser_len)) +
+  geom_tile(color = "white") + 
+  geom_text(aes(label = round(ser_len, 0)), size = 3) + 
+  scale_fill_gradient(low = "blue", high = "red", name = "% of cases")+
+  labs(title = "Length of stay by Service ",
+       x = "Lenght of Stay",
+       y = "Service Provided") +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+  
+```
+
+**Summary: How long people stay in treatment depends on the the type of services people receive. Detox shows the highest percentage of short stays. Rehab short term rehab usually last for about 4 weeks. Both outpatient services and long term rehab show that length of stays vary form week1 to over a couple months. The longer.**
+
+## Extra Credit (optional, up to 2 pts)
+
+#### Again, this is meant to *stretch* you, not *stress* you!
+
+Make one visualization that shows service type and length of stay **together**–that is, how completion rate varies across both at once. Faceting is one way, but there are others.
+
+Then, in a sentence, say what this combined view shows that your two separate charts in Question 3 could not.
+
+```{r}
+#| label: extra-credit
+
+```
+
+**What the combined view adds:**
+
+------------------------------------------------------------------------
+
+## Push to GitHub AND submit link on Canvas!
+
+Assignment is due **Friday 10/2, 11:59pm**.
